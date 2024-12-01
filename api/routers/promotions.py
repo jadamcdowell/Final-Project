@@ -47,3 +47,19 @@ def read_one(promotion_id: int, db: Session = Depends(get_db)):
 def update(promotion_id: int, request: schema.PromotionCreate, db: Session = Depends(get_db)):
     # Updates a specific promotion by its ID and returns the updated promotion
     return controller.update_promotion(db=db, promotion_id=promotion_id, promotion=request)
+
+
+# Endpoint to delete a promotion by ID
+@router.delete("/{promotion_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete(promotion_id: int, db: Session = Depends(get_db)):
+    # Fetches the promotion by ID to check if it exists
+    db_promotion = db.query(Promotion).filter(Promotion.id == promotion_id).first()
+    if db_promotion is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Promotion with ID {promotion_id} not found"
+        )
+    # Delete the promotion
+    db.delete(db_promotion)
+    db.commit()
+    return {"detail": f"Promotion with ID {promotion_id} deleted successfully"}

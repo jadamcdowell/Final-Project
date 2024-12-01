@@ -15,7 +15,7 @@ class Payment(Base):
     user_id = Column(Integer, ForeignKey('users.id'))
 
     # Payment method (e.g., 'Credit Card', 'PayPal', etc.)
-    payment_method = Column(String(3))
+    payment_method = Column(String(100))
 
     # Defines the relationship with the User model
     # Allows access to the user who made the payment
