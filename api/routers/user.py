@@ -41,6 +41,6 @@ def update_user(user_id: int, request: schema.UserCreate, db: Session = Depends(
 
 # Endpoint to delete a user by their ID
 @router.delete("/{user_id}")
-def delete(user_id: int, db: Session = Depends(get_db)):
+def delete_user(user_id: int, db: Session = Depends(get_db)):
     # Delete a user from the database by their user_id
     return controller.delete(db=db, user_id=user_id)

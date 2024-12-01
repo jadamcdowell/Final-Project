@@ -30,28 +30,28 @@ def create_promotion(promotion: PromotionCreate, db: Session = Depends(get_db)):
 
 # Endpoint to get all promotions
 @router.get("/", response_model=list[schema.PromotionOut])
-def read_all(db: Session = Depends(get_db)):
+def read_all_promotions(db: Session = Depends(get_db)):
     # Fetches all promotions from the database
     return controller.read_all(db)
 
 
 # Endpoint to get a specific promotion by ID
 @router.get("/{promotion_id}", response_model=schema.PromotionOut)
-def read_one(promotion_id: int, db: Session = Depends(get_db)):
+def read_one_promotion(promotion_id: int, db: Session = Depends(get_db)):
     # Fetches a specific promotion by its ID
     return controller.read_one(db, promotion_id=promotion_id)
 
 
 # Endpoint to update a promotion by ID
 @router.put("/{promotion_id}", response_model=schema.PromotionOut)
-def update(promotion_id: int, request: schema.PromotionCreate, db: Session = Depends(get_db)):
+def update_a_promotion(promotion_id: int, request: schema.PromotionCreate, db: Session = Depends(get_db)):
     # Updates a specific promotion by its ID and returns the updated promotion
     return controller.update_promotion(db=db, promotion_id=promotion_id, promotion=request)
 
 
 # Endpoint to delete a promotion by ID
 @router.delete("/{promotion_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete(promotion_id: int, db: Session = Depends(get_db)):
+def delete_a_promotion(promotion_id: int, db: Session = Depends(get_db)):
     # Fetches the promotion by ID to check if it exists
     db_promotion = db.query(Promotion).filter(Promotion.id == promotion_id).first()
     if db_promotion is None:

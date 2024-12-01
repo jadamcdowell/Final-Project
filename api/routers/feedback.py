@@ -41,6 +41,6 @@ def update_feedback(feedback_id: int, request: schema.FeedbackCreate, db: Sessio
 
 # Endpoint to delete feedback by ID
 @router.delete("/{feedback_id}")
-def delete(feedback_id: int, db: Session = Depends(get_db)):
+def delete_feedback(feedback_id: int, db: Session = Depends(get_db)):
     # Calls the controller to delete feedback by ID
     return controller.delete(db=db, feedback_id=feedback_id)
