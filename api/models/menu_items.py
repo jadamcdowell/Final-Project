@@ -11,10 +11,10 @@ class MenuItem(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     # Name of the menu item, indexed for faster lookups
-    name = Column(String, index=True)
+    name = Column(String(100), index=True)
 
     # Description of the menu item (e.g., ingredients or preparation style)
-    description = Column(String)
+    description = Column(String(255))
 
     # Price of the menu item
     price = Column(Float)

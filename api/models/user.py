@@ -19,7 +19,7 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Password of the user, stored as a string (hashed before storage in real scenarios)
-    password = Column(String)
+    password = Column(String(255), nullable=False)
 
     # One-to-many relationship with the Order model
     # Each user can have multiple orders

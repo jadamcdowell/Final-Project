@@ -9,10 +9,10 @@ class RestaurantStaff(Base):
     staff_id = Column(Integer, primary_key=True, index=True)
 
     # Role of the staff member (e.g., Manager, Server, etc.)
-    role = Column(String)
+    role = Column(String(50), nullable=False)
 
     # Name of the staff member
-    name = Column(String)
+    name = Column(String(100), index=True, nullable=False)
 
     # Defines a one-to-many relationship with the MenuItem model
     # Each staff member can be responsible for multiple menu items
