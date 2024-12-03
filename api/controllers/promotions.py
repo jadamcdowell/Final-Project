@@ -1,65 +1,100 @@
-from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from ..models import promotions as model  # Import the Promotion model
-from ..schemas import promotions as schema  # Import the Promotion schema
+from fastapi import HTTPException, status
+from ..models import promotions as promo_model, restaurant_staff as staff_model  # Import models
+from ..schemas import promotions as promo_schema  # Import schemas
 
 
-# Create a new promotion
-def create_promotion(db: Session, promotion: schema.PromotionCreate):
-    # Create a new Promotion object
-    db_promotion = model.Promotion(
-        is_valid=promotion.valid,  # Set promotion validity status
-        order_id=promotion.order_id,
-        user_id=promotion.user_id
-    )
-
-    try:
-        db.add(db_promotion)  # Add the promotion to the DB session
-        db.commit()  # Commit the transaction
-        db.refresh(db_promotion)  # Refresh the object with DB data
-    except Exception as e:
-        db.rollback()  # Rollback if error occurs
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))  # Raise error
-
-    return db_promotion
-
-
-# Get all promotions
+# Fetch all promotions
 def read_all(db: Session):
-    return db.query(model.Promotion).all()  # Return all promotions
+    promotions = db.query(promo_model.Promotion).all()
+    if not promotions:
+        raise HTTPException(status_code=404, detail="No promotions found.")
+    return promotions
 
 
-# Get a single promotion by ID
-def read_one(db: Session, promotion_id: int):
-    db_promotion = db.query(model.Promotion).filter(model.Promotion.id == promotion_id).first()
-    if not db_promotion:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Promotion not found")  # 404 if not found
-    return db_promotion
+# Fetch a single promotion by ID
+def read_one(db: Session, promo_id: int):
+    promotion = db.query(promo_model.Promotion).filter(promo_model.Promotion.id == promo_id).first()
+    if not promotion:
+        raise HTTPException(status_code=404, detail="Promotion not found.")
+    return promotion
 
 
-# Update a promotion
-def update_promotion(db: Session, promotion_id: int, promotion: schema.PromotionCreate):
+# Create a new promotion (only accessible by managers)
+def create_promotion(db: Session, request: promo_schema.PromotionCreate, staff_id: int):
+    # Fetch the staff member from the database
+    staff = db.query(staff_model.RestaurantStaff).filter(staff_model.RestaurantStaff.staff_id == staff_id).first()
+
+    if not staff:
+        raise HTTPException(status_code=404, detail="Staff member not found.")
+
+    # Check if the staff role is "Manager" in a case-insensitive way
+    if staff.role.lower() != "manager":  # Use lowercase for comparison
+        raise HTTPException(status_code=403, detail="Only Managers can create promotions.")
+
+    # Create and save the new promotion
+    new_promotion = promo_model.Promotion(
+        code=request.code,
+        description=request.description,
+        discount_percentage=request.discount_percentage,
+        start_date=request.start_date,
+        expiration_date=request.expiration_date,
+        is_valid=request.is_valid,
+        order_id=request.order_id,  # Ensure this is a valid order ID
+        user_id=request.user_id,  # Ensure this is a valid user ID
+        staff_id=staff_id  # Ensure staff_id is valid
+    )
+    db.add(new_promotion)
+    db.commit()
+    db.refresh(new_promotion)
+    return new_promotion
+
+
+# Update an existing promotion (only accessible by managers)
+def update_promotion(db: Session, promo_id: int, request: promo_schema.PromotionCreate, staff_id: int):
+    staff = db.query(staff_model.RestaurantStaff).filter(staff_model.RestaurantStaff.staff_id == staff_id).first()
+
+    # Check if staff is a Manager
+    if not staff or staff.role.lower() != "manager":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Permission denied. Only managers can update promotions.")
+
     # Fetch the promotion to update
-    db_promotion = db.query(model.Promotion).filter(model.Promotion.id == promotion_id).first()
+    promotion = db.query(promo_model.Promotion).filter(promo_model.Promotion.id == promo_id).first()
+    if not promotion:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Promotion not found.")
 
-    if db_promotion:
-        db_promotion.is_valid = promotion.is_valid  # Update validity status
-        db.commit()  # Commit changes to the DB
-        db.refresh(db_promotion)  # Refresh with updated data
-        return db_promotion  # Return updated promotion
-    else:
-        return None  # Return None if not found
+    # Update promotion fields
+    promotion.code = request.code
+    promotion.description = request.description
+    promotion.discount_percentage = request.discount_percentage
+    promotion.start_date = request.start_date
+    promotion.expiration_date = request.expiration_date
+    promotion.is_valid = request.is_valid
+    promotion.order_id = request.order_id
+    promotion.user_id = request.user_id
+
+    db.commit()  # Commit changes
+    db.refresh(promotion)  # Refresh and return updated promotion
+    return promotion
 
 
-# Delete a promotion
-def delete_promotion(db: Session, promotion_id: int):
-    db_promotion = db.query(model.Promotion).filter(model.Promotion.id == promotion_id).first()
+# Delete a promotion (only accessible by managers)
+def delete_promotion(db: Session, promo_id: int, staff_id: int):
+    staff = db.query(staff_model.RestaurantStaff).filter(staff_model.RestaurantStaff.staff_id == staff_id).first()
 
-    if not db_promotion:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Promotion not found")  # 404 if not found
+    # Check if staff is a Manager
+    if not staff or staff.role.lower() != "manager":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Permission denied. Only managers can delete promotions.")
 
-    db.delete(db_promotion)  # Delete promotion from the DB
-    db.commit()  # Commit the transaction
+    # Fetch the promotion to delete
+    promotion = db.query(promo_model.Promotion).filter(promo_model.Promotion.id == promo_id).first()
+    if not promotion:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Promotion not found.")
 
-    return {"detail": "Promotion deleted successfully"}  # Return success message
+    # Delete the promotion
+    db.delete(promotion)
+    db.commit()
 
+    return {"detail": f"Promotion with code {promotion.code} deleted successfully."}

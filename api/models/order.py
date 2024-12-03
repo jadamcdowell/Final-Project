@@ -70,3 +70,4 @@ class OrderItem(Base):
 
     # Relationship to the Promotion model, representing the promotion applied to this order item (if any)
     promotion = relationship('Promotion', back_populates='order_items')
+

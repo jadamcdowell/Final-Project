@@ -1,65 +1,72 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from ..controllers import promotions as controller  # Import the promotions controller functions
-from ..schemas import promotions as schema  # Import the promotions schemas
-from ..schemas.promotions import PromotionCreate, PromotionOut  # Import specific schema models
-from ..models.promotions import Promotion  # Import the Promotion model
-from ..dependencies.database import get_db  # Import the database dependency to get DB session
+from ..controllers import promotions as promo_controller  # Import promotion controller functions
+from ..schemas import promotions as promo_schema  # Import updated promotion schemas
+from ..models import restaurant_staff as staff_model  # Import the staff model
+from ..dependencies.database import get_db  # Database dependency
 
 # Create an APIRouter instance for the "Promotions" route
 router = APIRouter(
-    tags=['Promotions'],
+    tags=["Promotions"],
     prefix="/promotions"
 )
 
-
-# Endpoint to create a new promotion
-@router.post("/", response_model=PromotionOut)
-def create_promotion(promotion: PromotionCreate, db: Session = Depends(get_db)):
-    # Creates a new promotion in the database using the request data
-    db_promotion = Promotion(
-        order_id=promotion.order_id,
-        user_id=promotion.user_id,
-        is_valid=promotion.is_valid
-    )
-    db.add(db_promotion)  # Add the new promotion to the session
-    db.commit()  # Commit the transaction
-    db.refresh(db_promotion)  # Refresh the instance with the new data
-    return db_promotion  # Return the newly created promotion
-
-
 # Endpoint to get all promotions
-@router.get("/", response_model=list[schema.PromotionOut])
+@router.get("/", response_model=list[promo_schema.PromotionOut])
 def read_all_promotions(db: Session = Depends(get_db)):
-    # Fetches all promotions from the database
-    return controller.read_all(db)
+    # Calls the controller to fetch all promotions from the database
+    return promo_controller.read_all(db)
+
+
+# Endpoint to create a new promotion (Only Managers can create promotions)
+@router.post("/", response_model=promo_schema.PromotionOut)
+def create_promotion(request: promo_schema.PromotionCreate, staff_id: int, db: Session = Depends(get_db)):
+    # Check if the staff is a Manager
+    staff = db.query(staff_model.RestaurantStaff).filter(staff_model.RestaurantStaff.staff_id == staff_id).first()
+    if not staff:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Staff member not found.")
+    if staff.role.lower() != "manager":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                             detail="Only Managers can create promotions.")
+
+    # Calls the controller to create a new promotion
+    return promo_controller.create_promotion(db=db, request=request, staff_id=staff_id)
 
 
 # Endpoint to get a specific promotion by ID
-@router.get("/{promotion_id}", response_model=schema.PromotionOut)
-def read_one_promotion(promotion_id: int, db: Session = Depends(get_db)):
-    # Fetches a specific promotion by its ID
-    return controller.read_one(db, promotion_id=promotion_id)
+@router.get("/{promo_id}", response_model=promo_schema.PromotionOut)
+def read_one_promotion(promo_id: int, db: Session = Depends(get_db)):
+    # Calls the controller to fetch a specific promotion by ID
+    return promo_controller.read_one(db, promo_id=promo_id)
 
 
-# Endpoint to update a promotion by ID
-@router.put("/{promotion_id}", response_model=schema.PromotionOut)
-def update_a_promotion(promotion_id: int, request: schema.PromotionCreate, db: Session = Depends(get_db)):
-    # Updates a specific promotion by its ID and returns the updated promotion
-    return controller.update_promotion(db=db, promotion_id=promotion_id, promotion=request)
+# Endpoint to update an existing promotion (Only Managers can update promotions)
+@router.put("/{promo_id}", response_model=promo_schema.PromotionOut)
+def update_promotion(promo_id: int, request: promo_schema.PromotionCreate, staff_id: int,
+                     db: Session = Depends(get_db)):
+    # Check if the staff is a Manager
+    staff = db.query(staff_model.RestaurantStaff).filter(staff_model.RestaurantStaff.staff_id == staff_id).first()
+    if not staff:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Staff member not found.")
+    if staff.role.lower() != "manager":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                             detail="Only Managers can update promotions.")
+
+    # Calls the controller to update the promotion
+    return promo_controller.update_promotion(db=db, promo_id=promo_id, request=request, staff_id=staff_id)
 
 
-# Endpoint to delete a promotion by ID
-@router.delete("/{promotion_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_a_promotion(promotion_id: int, db: Session = Depends(get_db)):
-    # Fetches the promotion by ID to check if it exists
-    db_promotion = db.query(Promotion).filter(Promotion.id == promotion_id).first()
-    if db_promotion is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Promotion with ID {promotion_id} not found"
-        )
-    # Delete the promotion
-    db.delete(db_promotion)
-    db.commit()
-    return {"detail": f"Promotion with ID {promotion_id} deleted successfully"}
+# Endpoint to delete a promotion (Only Managers can delete promotions)
+@router.delete("/{promo_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_promotion(promo_id: int, staff_id: int, db: Session = Depends(get_db)):
+    # Check if the staff is a Manager
+    staff = db.query(staff_model.RestaurantStaff).filter(staff_model.RestaurantStaff.staff_id == staff_id).first()
+    if not staff:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Staff member not found.")
+    if staff.role.lower() != "manager":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                             detail="Only Managers can delete promotions.")
+
+    # Calls the controller to delete the promotion
+    promo_controller.delete_promotion(db=db, promo_id=promo_id, staff_id=staff_id)
+    return {"message": "Promotion deleted successfully."}

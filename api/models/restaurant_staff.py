@@ -17,3 +17,6 @@ class RestaurantStaff(Base):
     # Defines a one-to-many relationship with the MenuItem model
     # Each staff member can be responsible for multiple menu items
     menu_items = relationship("MenuItem", back_populates="staff", cascade="all, delete-orphan")
+
+    # Define the reverse relationship with promotions
+    promotions = relationship('Promotion', back_populates='staff')
