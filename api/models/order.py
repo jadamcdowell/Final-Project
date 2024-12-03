@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, ForeignKey
+from sqlalchemy import Column, Integer, ForeignKey, String
 from sqlalchemy.orm import relationship
 from ..dependencies.database import Base  # Import the base class for the model
+
 
 
 # Order model representing customer orders
@@ -12,6 +13,9 @@ class Order(Base):
 
     # Foreign key linking the order to a specific user (from 'users' table)
     user_id = Column(Integer, ForeignKey('users.id'))
+
+    # Stores the type of the order (e.g., dine-in, takeaway). Cannot be null.
+    order_type = Column(String(100), nullable=False)
 
     # Relationship to the User model, representing the user who placed the order
     user = relationship('User', back_populates='orders')

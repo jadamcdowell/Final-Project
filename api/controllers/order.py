@@ -16,7 +16,11 @@ def read_all(db: Session):
 
 # Create an order with associated order items
 def create_order(db: Session, request: schema.OrderCreate):
-    new_order = model.Order(user_id=request.user_id)  # Create new order
+    # Create a new order with user_id and order_type (pickup or delivery)
+    new_order = model.Order(
+        user_id=request.user_id,
+        order_type=request.order_type  # Include order_type here
+    )
     try:
         db.add(new_order)
         db.commit()
@@ -59,6 +63,7 @@ def update(db: Session, order_id: int, request: schema.OrderCreate):
 
     # Update order fields
     order.user_id = request.user_id  # Update user_id (if necessary)
+    order.order_type = request.order_type  # Update order_type (pickup or delivery)
 
     # Remove existing order items and add new ones
     for item in order.order_items:
