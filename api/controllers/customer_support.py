@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from ..models.customer_support import CustomerSupport
 from ..schemas.customer_support import CustomerSupportCreate
+from fastapi.responses import JSONResponse
 
 
 # Function to create a customer support ticket
@@ -39,4 +40,5 @@ def delete_ticket(db: Session, ticket_id: int):
     if ticket:
         db.delete(ticket)
         db.commit()
-    return {"message": "Ticket deleted successfully"}
+        return JSONResponse(content={"message": "Ticket deleted successfully"}, status_code=200)
+    return JSONResponse(content={"message": "Ticket not found"}, status_code=404)

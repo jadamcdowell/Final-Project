@@ -35,11 +35,10 @@ def read_one_ticket(ticket_id: int, db: Session = Depends(get_db)):
 @router.put("/{ticket_id}", response_model=schema.CustomerSupportOut)
 def update_ticket(ticket_id: int, request: schema.CustomerSupportCreate, db: Session = Depends(get_db)):
     # Update an existing customer support ticket by its ticket_id
-    return controller.update(db=db, request=request, ticket_id=ticket_id)
+    return controller.update_ticket(db=db, request=request, ticket_id=ticket_id)
 
 
 # Endpoint to delete a customer support ticket by its ID
 @router.delete("/{ticket_id}")
 def delete_ticket(ticket_id: int, db: Session = Depends(get_db)):
-    # Delete a customer support ticket from the database by its ticket_id
-    return controller.delete(db=db, ticket_id=ticket_id)
+    return controller.delete_ticket(db=db, ticket_id=ticket_id)
