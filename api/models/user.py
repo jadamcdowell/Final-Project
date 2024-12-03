@@ -1,3 +1,4 @@
+from fastapi.openapi.models import Schema
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -15,11 +16,17 @@ class User(Base):
     # Email address of the user, unique and indexed for faster querying
     email = Column(String(100), unique=True, index=True, nullable=False)
 
+    # Username of the user, this is optional for guest users
+    username = Column(String(255), nullable=True)
+
+    # Phone number of the user, indexed for faster querying (can be required for guest users)
+    phone_number = Column(String(100), index=True, nullable=False)
+
     # Timestamp of when the user was created, default is current time
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Password of the user, stored as a string (hashed before storage in real scenarios)
-    password = Column(String(255), nullable=False)
+    password = Column(String(255), nullable=True) # Password can be null for guest users
 
     # One-to-many relationship with the Order model
     # Each user can have multiple orders

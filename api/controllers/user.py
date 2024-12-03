@@ -9,10 +9,13 @@ from api.models.user import User  # Import User model for querying
 # Create a new user
 def create_user(db: Session, request: UserCreate):
     # Create a new User object and map the request data to the model fields
+    # Handle optional username and password for guest users
     new_user = model.User(
-        name=request.username,  # maps Pydantic `username` to SQLAlchemy `name`
+        name=request.name,  # maps Pydantic `name` to SQLAlchemy `name`
         email=request.email,
-        password=request.password
+        phone_number=request.phone_number,  # Include phone_number
+        username=request.username if request.username else None,  # Set username to None if not provided
+        password=request.password if request.password else None  # Set password to None if not provided
     )
 
     try:
@@ -25,9 +28,10 @@ def create_user(db: Session, request: UserCreate):
 
     return UserOut(  # Return the user details in the response format
         id=new_user.id,
-        username=new_user.name,
+        username=new_user.username,
         name=new_user.name,
         email=new_user.email,
+        phone_number=new_user.phone_number,
         created_at=new_user.created_at
     )
 
@@ -39,9 +43,10 @@ def read_all(db: Session):
         # Map each user to the UserOut schema
         return [UserOut(
             id=user.id,
-            username=user.name,
+            username=user.username,
             name=user.name,
             email=user.email,
+            phone_number=user.phone_number,
             created_at=user.created_at
         ) for user in users]
     except SQLAlchemyError as e:
@@ -57,9 +62,10 @@ def read_one(db: Session, user_id: int):
 
     return UserOut(  # Return user details in the specified output format
         id=user.id,
-        username=user.name,
+        username=user.username,
         name=user.name,
         email=user.email,
+        phone_number=user.phone_number,
         created_at=user.created_at
     )
 
@@ -99,3 +105,4 @@ def delete(db: Session, user_id: int):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
 
     return {"message": "User deleted successfully!"}  # Return success message
+
