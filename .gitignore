@@ -4,3 +4,5 @@ __pycache__/
 
 # Ignore virtual environments
 venv/
+
+*.pyc
