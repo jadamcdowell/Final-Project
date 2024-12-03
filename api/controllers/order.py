@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from ..models import order as model  # Import Order model
 from ..schemas import order as schema  # Import Order schema
+from ..models import order as model, promotions as promo_model  # Import Promotion model
+
 
 # Get all orders
 def read_all(db: Session):
@@ -14,14 +16,36 @@ def read_all(db: Session):
 
     return orders
 
-# Create an order with associated order items
+
+# Create an order with associated order items and validate promo code
 def create_order(db: Session, request: schema.OrderCreate):
-    # Create a new order with user_id, order_type (pickup or delivery), and status (defaults to "pending")
+    # Check if a promo code is provided
+    if request.promo_code:
+        # Fetch the promo code from the database
+        promotion = db.query(promo_model.Promotion).filter(
+            promo_model.Promotion.code == request.promo_code
+        ).first()
+
+        # Check if the promo code exists and is valid
+        if not promotion:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Promo code not found."
+            )
+        if not promotion.is_valid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Promo code is invalid or expired."
+            )
+
+    # Create a new order with user_id, order_type, status, and promo_code (if provided)
     new_order = model.Order(
         user_id=request.user_id,
         order_type=request.order_type,
-        status="pending"  # Default status
+        status="pending",  # Default status
+        promo_code=request.promo_code  # Include promo code if valid
     )
+
     try:
         db.add(new_order)
         db.commit()
@@ -44,6 +68,7 @@ def create_order(db: Session, request: schema.OrderCreate):
 
     return new_order
 
+
 # Get a single order by ID
 def read_one(db: Session, order_id: int):
     try:
@@ -55,6 +80,7 @@ def read_one(db: Session, order_id: int):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
 
     return order
+
 
 # Update an existing order and its items
 def update(db: Session, order_id: int, request: schema.OrderCreate):
@@ -83,6 +109,7 @@ def update(db: Session, order_id: int, request: schema.OrderCreate):
     db.refresh(order)  # Refresh and return updated order
     return order
 
+
 # Delete a specific order by ID
 def delete_order(db: Session, order_id: int):
     try:
@@ -101,6 +128,7 @@ def delete_order(db: Session, order_id: int):
     except SQLAlchemyError as e:
         error = str(e.__dict__.get('orig', e))  # Capture error details
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+
 
 # Get an order by its tracking number
 def get_order_by_tracking(db: Session, tracking_number: str):

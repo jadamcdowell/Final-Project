@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from ..controllers import promotions as promo_controller  # Import promotion controller functions
 from ..schemas import promotions as promo_schema  # Import updated promotion schemas
@@ -20,7 +20,11 @@ def read_all_promotions(db: Session = Depends(get_db)):
 
 # Endpoint to create a new promotion (Only Managers can create promotions)
 @router.post("/", response_model=promo_schema.PromotionOut)
-def create_promotion(request: promo_schema.PromotionCreate, staff_id: int, db: Session = Depends(get_db)):
+def create_promotion(
+    request: promo_schema.PromotionCreate,
+    staff_id: int = Query(...),
+    db: Session = Depends(get_db)
+):
     # Check if the staff is a Manager
     staff = db.query(staff_model.RestaurantStaff).filter(staff_model.RestaurantStaff.staff_id == staff_id).first()
     if not staff:
@@ -65,8 +69,9 @@ def delete_promotion(promo_id: int, staff_id: int, db: Session = Depends(get_db)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Staff member not found.")
     if staff.role.lower() != "manager":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                             detail="Only Managers can delete promotions.")
+                            detail="Only Managers can delete promotions.")
 
-    # Calls the controller to delete the promotion
+    # Calls the controller to delete the promotion, passing staff_id as well
     promo_controller.delete_promotion(db=db, promo_id=promo_id, staff_id=staff_id)
+
     return {"message": "Promotion deleted successfully."}

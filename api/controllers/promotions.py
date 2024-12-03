@@ -22,12 +22,15 @@ def read_one(db: Session, promo_id: int):
 
 # Create a new promotion (only accessible by managers)
 def create_promotion(db: Session, request: promo_schema.PromotionCreate, staff_id: int):
+    # Check if the promotion code already exists
+    existing_promotion = db.query(promo_model.Promotion).filter(promo_model.Promotion.code == request.code).first()
+    if existing_promotion:
+        raise HTTPException(status_code=400, detail=f"Promotion code '{request.code}' already exists.")
+
     # Fetch the staff member from the database
     staff = db.query(staff_model.RestaurantStaff).filter(staff_model.RestaurantStaff.staff_id == staff_id).first()
-
     if not staff:
         raise HTTPException(status_code=404, detail="Staff member not found.")
-
     # Check if the staff role is "Manager" in a case-insensitive way
     if staff.role.lower() != "manager":  # Use lowercase for comparison
         raise HTTPException(status_code=403, detail="Only Managers can create promotions.")
@@ -40,10 +43,9 @@ def create_promotion(db: Session, request: promo_schema.PromotionCreate, staff_i
         start_date=request.start_date,
         expiration_date=request.expiration_date,
         is_valid=request.is_valid,
-        order_id=request.order_id,  # Ensure this is a valid order ID
-        user_id=request.user_id,  # Ensure this is a valid user ID
         staff_id=staff_id  # Ensure staff_id is valid
     )
+
     db.add(new_promotion)
     db.commit()
     db.refresh(new_promotion)
@@ -71,8 +73,6 @@ def update_promotion(db: Session, promo_id: int, request: promo_schema.Promotion
     promotion.start_date = request.start_date
     promotion.expiration_date = request.expiration_date
     promotion.is_valid = request.is_valid
-    promotion.order_id = request.order_id
-    promotion.user_id = request.user_id
 
     db.commit()  # Commit changes
     db.refresh(promotion)  # Refresh and return updated promotion

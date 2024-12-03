@@ -28,7 +28,3 @@ class User(Base):
     # One-to-many relationship with the Payment model
     # Each user can have multiple payments
     payments = relationship('Payment', back_populates='user', cascade='all, delete-orphan')
-
-    # One-to-many relationship with the Promotion model
-    # Each user can have multiple promotions
-    promotions = relationship('Promotion', back_populates='user')

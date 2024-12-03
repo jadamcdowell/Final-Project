@@ -29,18 +29,10 @@ class Promotion(Base):
     # Whether the promotion is currently valid
     is_valid = Column(Boolean, default=True, nullable=False)
 
-    # Foreign key linking the promotion to a specific order
-    order_id = Column(Integer, ForeignKey('orders.id'), nullable=True)
-
-    # Foreign key linking the promotion to a specific user
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=True)
-
     # Foreign key linking the promotion to a specific Manager (staff member)
     staff_id = Column(Integer, ForeignKey('restaurant_staff.staff_id'), nullable=False)
 
     # Relationships
-    order = relationship('Order', back_populates='promotions')
-    user = relationship('User', back_populates='promotions')
     staff = relationship('RestaurantStaff', back_populates='promotions')
 
     # Defines the relationship with the OrderItem model
