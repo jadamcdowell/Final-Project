@@ -16,10 +16,11 @@ def read_all(db: Session):
 
 # Create an order with associated order items
 def create_order(db: Session, request: schema.OrderCreate):
-    # Create a new order with user_id and order_type (pickup or delivery)
+    # Create a new order with user_id, order_type (pickup or delivery), and status (defaults to "pending")
     new_order = model.Order(
         user_id=request.user_id,
-        order_type=request.order_type  # Include order_type here
+        order_type=request.order_type,
+        status="pending"  # Default status
     )
     try:
         db.add(new_order)
@@ -64,6 +65,7 @@ def update(db: Session, order_id: int, request: schema.OrderCreate):
     # Update order fields
     order.user_id = request.user_id  # Update user_id (if necessary)
     order.order_type = request.order_type  # Update order_type (pickup or delivery)
+    order.status = request.status  # Update status (e.g., 'pending', 'completed')
 
     # Remove existing order items and add new ones
     for item in order.order_items:
@@ -99,3 +101,15 @@ def delete_order(db: Session, order_id: int):
     except SQLAlchemyError as e:
         error = str(e.__dict__.get('orig', e))  # Capture error details
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+
+# Get an order by its tracking number
+def get_order_by_tracking(db: Session, tracking_number: str):
+    try:
+        order = db.query(model.Order).filter(model.Order.tracking_number == tracking_number).first()  # Fetch order by tracking number
+        if not order:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found!")
+    except SQLAlchemyError as e:
+        error = str(e.__dict__.get('orig', e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+
+    return order

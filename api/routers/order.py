@@ -44,3 +44,12 @@ def delete_order(order_id: int, db: Session = Depends(get_db)):
     # Calls the controller to delete the order by its ID and returns success message
     controller.delete_order(db=db, order_id=order_id)
     return {"message": "Order deleted successfully"}
+
+# Endpoint to get an order by tracking number
+@router.get("/tracking/{tracking_number}", response_model=schema.OrderOut)
+def get_order_by_tracking(tracking_number: str, db: Session = Depends(get_db)):
+    # Calls the controller to fetch an order by its tracking number
+    order = controller.get_order_by_tracking(db=db, tracking_number=tracking_number)
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+    return order
