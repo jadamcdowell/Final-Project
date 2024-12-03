@@ -21,14 +21,14 @@ def create_ticket(request: schema.CustomerSupportCreate, db: Session = Depends(g
 @router.get("/", response_model=list[schema.CustomerSupportOut])
 def read_all_tickets(db: Session = Depends(get_db)):
     # Fetch all customer support tickets from the database
-    return controller.read_all(db)
+    return controller.read_all_tickets(db)
 
 
 # Endpoint to get a specific customer support ticket by its ID
 @router.get("/{ticket_id}", response_model=schema.CustomerSupportOut)
 def read_one_ticket(ticket_id: int, db: Session = Depends(get_db)):
     # Fetch a specific customer support ticket by its ID from the database
-    return controller.read_one(db, ticket_id=ticket_id)
+    return controller.read_ticket(db, ticket_id=ticket_id)
 
 
 # Endpoint to update a specific customer support ticket by its ID
