@@ -1,25 +1,19 @@
 from pydantic import BaseModel
+from datetime import datetime
 
-
-# Base schema for promotions
-class PromotionBase(BaseModel):
-    is_valid: str
-    order_id: int
-    user_id: int
-
-    class Config:
-        orm_mode = True
-
-
-# Schema for creating promotions
-class PromotionCreate(PromotionBase):
-    pass
-
-
-# Schema for outputting promotion details
-class PromotionOut(PromotionBase):
-    id: int  # Promotion ID
+# Model for creating/updating promotions
+class PromotionCreate(BaseModel):
+    code: str
+    description: str
+    discount_percentage: float
+    start_date: datetime
+    expiration_date: datetime
+    is_valid: bool
 
     class Config:
         orm_mode = True
-        
+
+
+# Model for outputting promotion data
+class PromotionOut(PromotionCreate):
+    id: int  # Includes generated promotion ID
