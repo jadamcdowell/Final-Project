@@ -21,6 +21,9 @@ def read_all_menu_items(db: Session = Depends(get_db)):
 # Endpoint to create a new menu item (Only Managers can create menu items)
 @router.post("/", response_model=schema.MenuItemOut)
 def create_menu_item(request: schema.MenuItemCreate, db: Session = Depends(get_db)):
+    """
+        Create a menu item. Only managers can perform this action.
+    """
     # Calls the controller to create a new menu item
     return controller.create_menu_item(db=db, request=request)
 
@@ -35,6 +38,9 @@ def read_one_menu_item(menu_item_id: int, db: Session = Depends(get_db)):
 # Endpoint to update an existing menu item (Only Managers can update menu items)
 @router.put("/{menu_item_id}", response_model=schema.MenuItemOut)
 def update_menu_item(menu_item_id: int, request: schema.MenuItemCreate, db: Session = Depends(get_db)):
+    """
+        Update a menu item. Only managers can perform this action.
+    """
     # Calls the controller to update an existing menu item
     return controller.update_menu_item(db=db, request=request, menu_item_id=menu_item_id)
 
@@ -42,5 +48,8 @@ def update_menu_item(menu_item_id: int, request: schema.MenuItemCreate, db: Sess
 # Endpoint to delete a menu item (Only Managers can delete menu items)
 @router.delete("/{menu_item_id}")
 def delete_menu_item(menu_item_id: int, staff_id: int, db: Session = Depends(get_db)):
+    """
+        Delete a menu item. Only managers can perform this action.
+    """
     # Calls the controller to delete a menu item by ID
     return controller.delete_menu_item(db=db, menu_item_id=menu_item_id, staff_id=staff_id)

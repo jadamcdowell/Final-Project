@@ -25,6 +25,9 @@ def create_promotion(
     staff_id: int = Query(...),
     db: Session = Depends(get_db)
 ):
+    """
+        Create a promotion. Only managers can perform this action.
+    """
     # Check if the staff is a Manager
     staff = db.query(staff_model.RestaurantStaff).filter(staff_model.RestaurantStaff.staff_id == staff_id).first()
     if not staff:
@@ -48,6 +51,9 @@ def read_one_promotion(promo_id: int, db: Session = Depends(get_db)):
 @router.put("/{promo_id}", response_model=promo_schema.PromotionOut)
 def update_promotion(promo_id: int, request: promo_schema.PromotionCreate, staff_id: int,
                      db: Session = Depends(get_db)):
+    """
+        Update a promotion. Only managers can perform this action.
+    """
     # Check if the staff is a Manager
     staff = db.query(staff_model.RestaurantStaff).filter(staff_model.RestaurantStaff.staff_id == staff_id).first()
     if not staff:
@@ -63,6 +69,9 @@ def update_promotion(promo_id: int, request: promo_schema.PromotionCreate, staff
 # Endpoint to delete a promotion (Only Managers can delete promotions)
 @router.delete("/{promo_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_promotion(promo_id: int, staff_id: int, db: Session = Depends(get_db)):
+    """
+        Delete a promotion. Only managers can perform this action.
+    """
     # Check if the staff is a Manager
     staff = db.query(staff_model.RestaurantStaff).filter(staff_model.RestaurantStaff.staff_id == staff_id).first()
     if not staff:

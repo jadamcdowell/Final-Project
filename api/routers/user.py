@@ -14,6 +14,9 @@ router = APIRouter(
 # Endpoint to create a new user
 @router.post("/", response_model=schema.UserOut)
 def create_user(request: schema.UserCreate, db: Session = Depends(get_db)):
+    """
+        Guests can access without entering username and password.
+    """
     # Create a new user and store it in the database
     return controller.create_user(db=db, request=request)
 
