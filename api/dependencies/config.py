@@ -3,7 +3,7 @@ class conf:
     db_name = "restaurant_service_api"
     db_port = 3306
     db_user = "root"
-    db_password = "Redcross1"
+    db_password = "password"
     app_host = "localhost"
     app_port = 8000
 
